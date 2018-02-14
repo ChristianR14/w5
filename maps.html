@@ -1,0 +1,241 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+     
+  <meta name="viewport" content="width=device-width" />
+   
+   <style type="text/css">
+      html { height: 100% }
+      body { height: 100%; margin: 0; padding: 0 }
+      #map_canvas { height: 100% }
+    </style>
+
+<script type="text/javascript"
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBWRMN9EGp6VYWXBYBzwu01FL3w0Q6iFBU">
+</script>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+
+<script type="text/javascript">
+
+
+        var mapOptions = null;
+        var map = null;
+        var marker = null;
+       
+        var infowindow;
+        (function () 
+            {
+                google.maps.Map.prototype.markers = new Array();
+                google.maps.Map.prototype.getMarkers = function ()
+                {
+                return this.markers
+                };
+            
+                google.maps.Map.prototype.clearMarkers = function () 
+                {
+                    for (var i = 0; i < this.markers.length; i++) {
+                        this.markers[i].setMap(null);
+                    }
+                this.markers = new Array();
+                };
+            
+                google.maps.Marker.prototype._setMap = google.maps.Marker.prototype.setMap;
+                google.maps.Marker.prototype.setMap = function (map) 
+                {
+                    if (map) {
+                        map.markers[map.markers.length] = this;
+                    }
+                    this._setMap(map);
+                }
+        }
+            )();
+            
+        
+        
+        function initMap() {
+            
+            lat= 19.061854229761998;
+            lng = -98.20294618606567;
+            document.getElementById('lat').value=lat;
+            document.getElementById('lng').value=lng;
+            
+          
+            mapOptions = {
+                center: new google.maps.LatLng(lat, lng),
+                zoom: 14,
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+            };
+
+            map = new google.maps.Map(document.getElementById("map_canvas"),
+                mapOptions);
+            
+            google.maps.event.addListener(map, 'click', function (event) {
+                
+                lat =event.latLng.lat();
+                lng=event.latLng.lng();
+
+                document.getElementById('lat').value=lat;
+                document.getElementById('lng').value=lng;
+                
+                map.clearMarkers();
+                drawMarker();
+            });
+
+            drawMarker();
+
+        }
+
+        
+        function drawMarker() 
+        {
+       	    infowindow = new google.maps.InfoWindow();
+            var i; 
+            
+            var message = document.getElementById('pinmessage').value;
+          
+                var pinColor = document.getElementById('pincolor').value;
+                var pinChar = document.getElementById('pinchar').value;
+
+            
+                var pinImage = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=" + pinChar + "|" + pinColor,
+                        new google.maps.Size(21, 34),
+                        new google.maps.Point(0, 0),
+                        new google.maps.Point(10, 34));
+
+                marker = new google.maps.Marker({
+                    position: new google.maps.LatLng(lat, lng),
+                    icon: pinImage,
+                    title: '' + message,
+                    map: map
+                });
+            obtenerDireccion(function(data) {
+       	    	//infowindow.setContent(data.direccion);
+                //infowindow.open(map, marker);
+                obtenerClima(function(data2) {
+	       	    	infowindow.setContent("Direccion: " + data.direccion +"<br>Temperatura: " + Math.trunc(data2.temperature - 274) + " C");
+	                infowindow.open(map, marker);
+       	    	});
+       	    });
+
+
+               
+
+                /*google.maps.event.addListener(marker, 'mouseover', (function (marker, i) {
+                    return function () {
+                        infowindow.setContent(nombre);
+                        infowindow.open(map, marker);
+                    }
+                })(marker, i));*/
+        }
+
+        
+    
+    function obtenerDireccion(callback)
+    {
+        //alert("obteniendo direccion ...");
+
+        var geocoder = new google.maps.Geocoder;
+        
+        var mylat = document.getElementById('lat').value;
+        var mylng = document.getElementById('lng').value;
+
+
+
+        var latlng = {lat: parseFloat(mylat), lng: parseFloat(mylng)};
+  geocoder.geocode({'location': latlng}, function(results, status) {
+    if (status === 'OK') {
+      if (results[0]) {
+          //window.alert(results[0].formatted_address);
+          //window.alert(JSON.stringify(results[0]));
+          //direccion = results[0].formatted_address;
+          callback({ Status: "OK", direccion: results[0].formatted_address });
+          //window.alert(direccion);
+          /*var infowindow = new google.maps.InfoWindow({
+          	content: direccion
+          });*/
+        
+      } else {
+        window.alert('No results found');
+      }
+    } else {
+      window.alert('Geocoder failed due to: ' + status);
+    }
+  });
+    }
+
+
+    function obtenerClima(callback)
+    {
+        //alert("obteniendo clima ...");
+
+        lat = document.getElementById('lat').value;
+        lng = document.getElementById('lng').value;
+        var apiKey = "f344facfa63b0386c960e3099c1acd8e";
+
+      $.getJSON("http://api.openweathermap.org/data/2.5/weather?lat=" + 
+        lat + "&lon=" + lng + "&appid=" + apiKey, function(data) 
+        {
+            //temperature = JSON.stringify(data.main.temp);
+            callback({cod: 200, temperature: JSON.stringify(data.main.temp)})
+        })
+    }
+
+ 
+
+    </script>
+  
+  <style type="text/css">
+        .colorYellow { color: yellow; }
+        .colorRed { color: red; }
+        .colorBlue { color: blue; }
+        .colorGreen { color: green; }
+ </style>
+ 
+ 
+
+
+ 
+  </head>
+
+  <body onload="initMap()">
+   
+         <nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#">Movies & series</a>
+    </div>
+    <ul class="nav navbar-nav">
+      <li><a href="#" onclick="showpage(0)">Home</a></bli>
+      <li><a href="/carrito" onclick="showpage(1)">Shop</a></li>
+    </ul>
+  </div>
+</nav>
+    
+      
+
+
+
+    			<input name="lat" class="form-control" type="hidden" value="" id="lat">
+    			<input name="lng" class="form-control" type="hidden" value="" id="lng">
+    			<input name="pincolor" class="form-control" type="hidden" value="FFFFFF" id="pincolor">
+    			<input name="pinchar" class="form-control" type="hidden" value="@" id="pinchar">
+    			<input name="pinmessage" class="form-control" type="hidden" value="Test" id="pinmessage">
+
+
+
+
+
+
+      <div id="map_canvas"  style="width: 100%; height: 60%; float: left; border: 1px solid black;">
+
+      </div>
+
+      
+	  
+      
+     
+  </body>
+</html>
