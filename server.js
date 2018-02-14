@@ -21,6 +21,9 @@ app.get('/carrito', function(req, res) {
 app.get('/home', function(req, res) {
  res.sendfile('maps.html');
 });
+app.get('/youtube', function(req, res) {
+ res.sendfile('youtube.html');
+});
 
 route(app, /^\/(assets|dist|img)\/(.*)/, './');
 
